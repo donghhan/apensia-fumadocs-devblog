@@ -17,6 +17,9 @@ dependencies:
   fumadocs-ui:
     specifier: 13.4.6
     version: 13.4.6(@types/react-dom@18.3.0)(@types/react@18.3.5)(next@14.2.7)(react-dom@18.3.1)(react@18.3.1)(tailwindcss@3.4.10)
+  lucide-react:
+    specifier: ^0.439.0
+    version: 0.439.0(react@18.3.1)
   next:
     specifier: 14.2.7
     version: 14.2.7(react-dom@18.3.1)(react@18.3.1)
@@ -2276,6 +2279,14 @@ packages:
 
   /lucide-react@0.438.0(react@18.3.1):
     resolution: {integrity: sha512-uq6yCB+IzVfgIPMK8ibkecXSWTTSOMs9UjUgZigfrDCVqgdwkpIgYg1fSYnf0XXF2AoSyCJZhoZXQwzoai7VGw==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0-rc
+    dependencies:
+      react: 18.3.1
+    dev: false
+
+  /lucide-react@0.439.0(react@18.3.1):
+    resolution: {integrity: sha512-PafSWvDTpxdtNEndS2HIHxcNAbd54OaqSYJO90/b63rab2HWYqDbH194j0i82ZFdWOAcf0AHinRykXRRK2PJbw==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0-rc
     dependencies:

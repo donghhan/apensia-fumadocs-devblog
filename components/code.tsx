@@ -1,15 +1,21 @@
 import { AnnotationHandler, Pre, RawCode, highlight } from "codehike/code";
 import { callout } from "./annotations/callout";
+import { mark } from "./annotations/mark";
+import { diff } from "./annotations/diff";
+import { CopyButton } from "./annotations/button";
 
 export async function Code({ codeblock }: { codeblock: RawCode }) {
-  const highlighted = await highlight(codeblock, "github-from-css");
+  const highlighted = await highlight(codeblock, "github-dark");
 
   return (
-    <Pre
+    <div className="relative">
+      <CopyButton text={highlighted.code}/>
+<Pre
       code={highlighted}
-      handlers={[borderHandler, bgHandler]}
+      handlers={[borderHandler, bgHandler, mark, diff, callout]}
       className="border bg-card"
     />
+    </div>
   );
 }
 
