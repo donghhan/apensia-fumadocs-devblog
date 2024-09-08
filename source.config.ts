@@ -19,13 +19,3 @@ export default defineConfig({
     jsx: true,
   },
 });
-
-export const blog = defineCollections({
-  type: "doc",
-  dir: "./content/letha",
-  mdxOptions: {
-    remarkPlugins: [[remarkCodeHike, chConfig]],
-    recmaPlugins: [[recmaCodeHike, chConfig]],
-    jsx: true,
-  },
-});

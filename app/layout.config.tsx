@@ -30,16 +30,16 @@ export const docsOptions: DocsLayoutProps = {
     transparentMode: "none",
     children: undefined,
   },
-  sidebar: {
-    banner: (
-      <RootToggle
-        options={modes.map((mode) => ({
-          url: `/docs/${mode.param}`,
-          title: mode.name,
-          description: mode.description,
-          icon: "",
-        }))}
-      />
-    ),
-  },
+  // sidebar: {
+  //   banner: (
+  //     <RootToggle
+  //       options={modes.map((mode) => ({
+  //         url: `/${mode.param}`,
+  //         title: mode.name,
+  //         description: mode.description,
+  //         icon: "",
+  //       }))}
+  //     />
+  //   ),
+  // },
 };

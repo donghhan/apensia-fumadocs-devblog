@@ -5,16 +5,19 @@ import { diff } from "./annotations/diff";
 import { CopyButton } from "./annotations/button";
 
 export async function Code({ codeblock }: { codeblock: RawCode }) {
-  const highlighted = await highlight(codeblock, "github-dark");
+  const highlighted = await highlight(codeblock, "github-from-css");
 
   return (
-    <div className="relative">
-      <CopyButton text={highlighted.code}/>
-<Pre
-      code={highlighted}
-      handlers={[borderHandler, bgHandler, mark, diff, callout]}
-      className="border bg-card"
-    />
+    <div className="rounded">
+      <div className="text-center p-4 h-10 flex items-center justify-between bg-zinc-700 text-zinc-400 text-sm relative rounded-t-lg">
+        {highlighted.meta}
+        <CopyButton text={highlighted.code} />
+      </div>
+      <Pre
+        code={highlighted}
+        handlers={[borderHandler, bgHandler, mark, diff, callout]}
+        className="border mt-0 rounded-b-lg rounded-t-none bg-zinc-900"
+      />
     </div>
   );
 }
@@ -29,7 +32,8 @@ const borderHandler: AnnotationHandler = {
 
 const bgHandler: AnnotationHandler = {
   name: "bg",
-  Inline: ({ annotation, children }) => (
-    <span style={{ background: "#2d26" }}>{children}</span>
-  ),
+  Inline: ({ annotation, children }) => {
+    const bgColor = annotation.query || "#2d26";
+    return <span style={{ background: bgColor }}>{children}</span>;
+  },
 };

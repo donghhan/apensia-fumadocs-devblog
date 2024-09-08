@@ -6,7 +6,7 @@ import { create } from "@/components/ui/icon";
 import { attachFile, createOpenAPI } from "fumadocs-openapi/server";
 
 export const utils = loader({
-  baseUrl: "/docs/letha-backend",
+  baseUrl: "/docs",
   icon(icon) {
     if (icon && icon in icons) {
       return create({ icon: icons[icon as keyof typeof icons] });

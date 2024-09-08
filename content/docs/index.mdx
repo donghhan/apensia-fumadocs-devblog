@@ -1,20 +1,116 @@
 ---
-title: Hello World
-description: Your first document
+title: Project Initialization
+description: Frontend & Backend
 ---
 
-```js
-// !diff +
-const lorem = ipsum == null ? 0 : 1;
-dolor = lorem - sit(dolor);
-let amet = lorem ? consectetur(ipsum) : 3;
-```
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { CodeBlock } from "fumadocs-ui/components/codeblock";
 
-Welcom to the docs! You can start writing documents in `/content/docs`.
+# Backend
 
-## What is Next?
+## API server for application
 
-<Cards>
-  <Card title="Learn more about Next.js" href="https://nextjs.org/docs" />
-  <Card title="Learn more about Fumadocs" href="https://fumadocs.vercel.app" />
-</Cards>
+<div style={{ display: "flex", alignItems: "center", gap: "1em" }}>
+    <img
+    height="32"
+    width="32"
+    src="https://cdn.simpleicons.org/express/000000/ffffff"
+    />
+
+    <span style={{ fontSize: "2rem" }}>+</span>
+
+    <img
+    height="32"
+    width="32"
+    src="https://cdn.simpleicons.org/typescript/3178C6"
+    />
+
+</div>
+
+<Steps>
+    <Step>
+        ### Create root folder
+
+        ```bash bash
+        mkdir api-server
+        ```
+
+    </Step>
+
+    <Step>
+        ### Downloading NPM packages
+
+        <Tabs items={["npm", "yarn", "pnpm"]}>
+            <Tab value="npm">`npm i express && npm i -D typescript ts-node @types/express nodemon`</Tab>
+            <Tab value="yarn">`yarn add express && yarn add -D typescript ts-node @types/express nodemon`</Tab>
+            <Tab value="pnpm">`pnpm add express && pnpm add -D typescript ts-node @types/express nodemon`</Tab>
+        </Tabs>
+
+        1. [`nodemon`](https://github.com/remy/nodemon/?tab=readme-ov-file#nodemon): Restarting node application whenever files change.
+        2. [`ts-node`](https://www.npmjs.com/package/ts-node#overview): Helps execute Typescript on Node.js without pre-compiling into Javascript.
+
+    </Step>
+
+    <Step>
+        ### Import alias
+
+        Import alias allows us to import external files in neat way. For example,
+
+        ```ts
+        // !bg[23:34] rgba(240, 61, 13, 0.48)
+        import someFile from "../../../../middlewares/someDirectory/someFile"; // 👉 Not this
+        // !bg[23:24] rgba(6, 200, 38, 0.48)
+        import someFile from "@/middlewares/someDirectory/someFile"; // ✅ But this!
+        ```
+
+        <br />
+
+        <Steps>
+            <Step>
+                #### Install packages
+
+                <Tabs items={["npm", "yarn", "pnpm"]}>
+                    <Tab value="npm">`npm i -D tsconfig-paths`</Tab>
+                    <Tab value="yarn">`yarn add -D tsconfig-paths`</Tab>
+                    <Tab value="pnpm">`pnpm add -D tsconfig-paths`</Tab>
+                </Tabs>
+            </Step>
+
+            <Step>
+                #### Modify `paths` in `tsconfig.json`
+
+                We can designate import aliases by setting [`paths`](https://www.typescriptlang.org/tsconfig/#paths).
+
+                ```json tsconfig.json
+                {
+                    "compilerOptions": {
+                        "baseUrl": ".",
+                        // !diff +
+                        "paths": [
+                        // !diff +
+                            "@/*": ["./*"]
+                        ]
+                    }
+                }
+                ```
+            </Step>
+
+            <Step>
+                #### Modify `package.json`
+
+                Modify the `dev` command as [follows](https://github.com/dividab/tsconfig-paths?tab=readme-ov-file#with-ts-node).
+
+                ```json package.json
+                {
+                    "scripts": {
+                        // !diff +
+                        "dev": "ts-node -r tsconfig-paths/register src/index.ts",
+                    },
+                }
+                ```
+            </Step>
+        </Steps>
+    </Step>
+
+</Steps>

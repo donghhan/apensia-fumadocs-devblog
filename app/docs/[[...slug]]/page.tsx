@@ -1,5 +1,6 @@
 import { utils } from "@/app/source";
 import type { Metadata } from "next";
+import { Pre, CodeBlock } from "fumadocs-ui/components/codeblock";
 import {
   DocsPage,
   DocsBody,
@@ -25,7 +26,17 @@ export default async function Page({
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <DocsBody>
-        <MDX components={{ ...defaultMdxComponents, Code }} />
+        <MDX
+          components={{
+            ...defaultMdxComponents,
+            Code,
+            // pre: ({ ref: _ref, ...props }) => (
+            //   <CodeBlock {...props} keepBackground>
+            //     <Pre>{props.children}</Pre>
+            //   </CodeBlock>
+            // ),
+          }}
+        />
       </DocsBody>
     </DocsPage>
   );
