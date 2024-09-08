@@ -12,6 +12,7 @@
     "codehike": "^1.0.1",
     "fumadocs-core": "13.4.6",
     "fumadocs-mdx": "10.0.1",
+    "fumadocs-openapi": "^5.4.12",
     "fumadocs-ui": "13.4.6",
     "lucide-react": "^0.439.0",
     "next": "14.2.7",

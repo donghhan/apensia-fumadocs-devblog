@@ -1,4 +1,4 @@
-import { source } from "@/app/source";
+import { utils } from "@/app/source";
 import type { Metadata } from "next";
 import {
   DocsPage,
@@ -15,7 +15,7 @@ export default async function Page({
 }: {
   params: { slug?: string[] };
 }) {
-  const page = source.getPage(params.slug);
+  const page = utils.getPage(params.slug);
   if (!page) notFound();
 
   const MDX = page.data.body;
@@ -32,11 +32,11 @@ export default async function Page({
 }
 
 export async function generateStaticParams() {
-  return source.generateParams();
+  return utils.generateParams();
 }
 
 export function generateMetadata({ params }: { params: { slug?: string[] } }) {
-  const page = source.getPage(params.slug);
+  const page = utils.getPage(params.slug);
   if (!page) notFound();
 
   return {

@@ -1,4 +1,8 @@
-import { defineDocs, defineConfig } from "fumadocs-mdx/config";
+import {
+  defineDocs,
+  defineConfig,
+  defineCollections,
+} from "fumadocs-mdx/config";
 import { remarkCodeHike, recmaCodeHike } from "codehike/mdx";
 
 export const { docs, meta } = defineDocs();
@@ -9,6 +13,16 @@ const chConfig = {
 };
 
 export default defineConfig({
+  mdxOptions: {
+    remarkPlugins: [[remarkCodeHike, chConfig]],
+    recmaPlugins: [[recmaCodeHike, chConfig]],
+    jsx: true,
+  },
+});
+
+export const blog = defineCollections({
+  type: "doc",
+  dir: "./content/letha",
   mdxOptions: {
     remarkPlugins: [[remarkCodeHike, chConfig]],
     recmaPlugins: [[recmaCodeHike, chConfig]],
