@@ -9,14 +9,14 @@ export async function Code({ codeblock }: { codeblock: RawCode }) {
 
   return (
     <div className="rounded">
-      <div className="text-center p-4 h-10 flex items-center justify-between bg-zinc-700 text-zinc-400 text-sm relative rounded-t-lg">
+      <div className="text-center p-4 h-9 flex items-center justify-between bg-neutral-800 text-zinc-400 text-sm relative rounded-t-lg">
         {highlighted.meta}
         <CopyButton text={highlighted.code} />
       </div>
       <Pre
         code={highlighted}
         handlers={[borderHandler, bgHandler, mark, diff, callout]}
-        className="border mt-0 rounded-b-lg rounded-t-none bg-zinc-900"
+        className="border mt-0 rounded-b-lg rounded-t-none bg-neutral-950"
       />
     </div>
   );

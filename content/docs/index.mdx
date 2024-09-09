@@ -26,14 +26,24 @@ import { CodeBlock } from "fumadocs-ui/components/codeblock";
     src="https://cdn.simpleicons.org/typescript/3178C6"
     />
 
+    <span style={{ fontSize: "2rem" }}>+</span>
+
+    <img
+    height="32"
+    width="32"
+    src="https://cdn.simpleicons.org/mongodb/47a248"
+    />
+
 </div>
 
 <Steps>
     <Step>
         ### Create root folder
 
-        ```bash bash
-        mkdir api-server
+        Create project root folder
+
+        ```
+        mkdir [WHATEVER_NAME_YOU_WANT_FOR_YOUR_APPLICATION]
         ```
 
     </Step>
@@ -53,6 +63,23 @@ import { CodeBlock } from "fumadocs-ui/components/codeblock";
     </Step>
 
     <Step>
+        ### Initialize server
+
+        Create `init.ts` file in the project root folder
+
+        ```ts
+        import express, { Application } from "express";
+
+        const app: Application = express();
+
+        app.listen(4000, () =>
+            console.log("Server is running on http://localhost:4000")
+        );
+
+        ```
+    </Step>
+
+    <Step>
         ### Import alias
 
         Import alias allows us to import external files in neat way. For example,
@@ -64,7 +91,6 @@ import { CodeBlock } from "fumadocs-ui/components/codeblock";
         import someFile from "@/middlewares/someDirectory/someFile"; // ✅ But this!
         ```
 
-        <br />
 
         <Steps>
             <Step>
@@ -97,20 +123,131 @@ import { CodeBlock } from "fumadocs-ui/components/codeblock";
             </Step>
 
             <Step>
+                #### Create `nodemon.json` configuration file
+
+                Create [`nodemon` configuration file](https://github.com/remy/nodemon?tab=readme-ov-file#config-files) in the root folder.
+
+                ```json nodemon.json
+                {
+                    "ignore": ["**/*.test.ts", "**/*.spec.ts", ".git", "node_modules"],
+                    "watch": ["src"],
+                    "exec": "node -r tsconfig-paths/register -r ts-node/register ./src/init.ts",
+                    "ext": "ts, js"
+                }
+                ```
+
+                1. `ignore`: Literally [ignore changes of files](https://github.com/remy/nodemon?tab=readme-ov-file#ignoring-files) that are specified.
+                2. `watch`: [Watch changes of files](https://github.com/remy/nodemon?tab=readme-ov-file#monitoring-multiple-directories) that are within the specified directories.
+                3. `exec`: [Specifying extensions](https://github.com/remy/nodemon?tab=readme-ov-file#specifying-extension-watch-list) of files.
+
+            </Step>
+
+            <Step>
                 #### Modify `package.json`
 
-                Modify the `dev` command as [follows](https://github.com/dividab/tsconfig-paths?tab=readme-ov-file#with-ts-node).
+                Modify the `dev` command as follows.
 
                 ```json package.json
                 {
                     "scripts": {
+                        // !diff -
+                        "dev": "node -r ts-node/reigster ./src/init.ts"
                         // !diff +
-                        "dev": "ts-node -r tsconfig-paths/register src/index.ts",
+                        "dev": "nodemon",
                     },
                 }
                 ```
             </Step>
         </Steps>
+    </Step>
+
+    <Step>
+        ### Configuring with MongoDB
+
+        <Steps>
+            <Step>
+                #### Install pacakges
+
+                <Tabs items={["npm", "yarn", "pnpm"]}>
+                    <Tab value="npm">`npm i mongoose && npm i -D @types/mongoose dotenv`</Tab>
+                    <Tab value="yarn">`yarn add mongoose && yarn add -D @types/mongoose dotenv`</Tab>
+                    <Tab value="pnpm">`pnpm add mongoose && pnpm add -D @types/mongoose dotenv`</Tab>
+                </Tabs>
+
+                1. [Mongoose](https://mongoosejs.com/) provides a straight-forward, schema-based solution to model in our application data.
+                2. [`dotenv`](https://github.com/motdotla/dotenv?tab=readme-ov-file#dotenv-) is a zero-dependency module that loads environemtn variables from a `.env` file into [`process.env`](https://nodejs.org/docs/latest/api/process.html#process_process_env).
+            </Step>
+
+            <Step>
+                #### Configure `dotenv` on our `init.ts` file
+
+                Come back to our server initialization file (`init.ts`) and load `dotenv/config`.
+
+                ```ts init.ts
+                // !diff +
+                import "dotenv/config";
+                import express, { Application } from "express";
+
+                // ...
+                ```
+            </Step>
+
+            <Step>
+                #### Add MongoDB URI in `.env` file
+
+                Create `.env` file in project root folder and put MongoDB URI you created.
+                Usually MongoDB URI will start with `mongodb+srv://`
+
+                ```text .env
+                MONGODB_URI="mongodb+srv://your_db:your_db_password@your_cluster_name..."
+                ```
+            </Step>
+
+            <Step>
+                #### Add `.env` in `.gitignore`
+
+                Add `.env` file in `.gitignore` file for preventing being leaked to the public.
+
+                ```text .gitignore
+                .env
+                ```
+            </Step>
+        </Steps>
+    </Step>
+
+    <Step>
+        ### Connect MongoDB URI with our server
+
+        Create separate file called `db.ts` and put code as below.
+
+        ```ts utils/db.ts
+        import "dotenv/config";
+        import mongoose from "mongoose";
+
+        const DB_URI =
+        process.env.NODE_ENV === "development"
+            ? (process.env.DB_URI_DEVELOPMENT as string)
+            : (process.env.DB_URI_PRODUCTION as string);
+
+        const DB_NAME =
+        process.env.NODE_ENV === "development"
+            ? (process.env.DB_NAME_DEVELOPMENT as string)
+            : (process.env.DB_NAME_PRODUCTION as string);
+
+        mongoose
+            .connect(DB_URI, { serverSelectionTimeoutMS: 10000, dbName: DB_NAME })
+            .catch((error: unknown) => console.log("DB connection error 🚨: ", error));
+
+        mongoose.connection.on("error", (error: unknown) =>
+            console.log("DB connection error 🚨: ", error)
+        );
+        mongoose.connection.once("open", () =>
+            console.log("DB connected successfully ✅")
+        );
+        ```
+
+        1. I created two different DBs: one for development, and the other one for production.
+        2. [`Mongoose.prototype.connect()`](https://mongoosejs.com/docs/api/mongoose.html#Mongoose.prototype.connect()) allows us to connect our MongoDB URI to our server application.
     </Step>
 
 </Steps>
