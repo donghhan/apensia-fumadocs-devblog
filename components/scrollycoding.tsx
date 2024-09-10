@@ -6,7 +6,8 @@ import {
 } from "codehike/utils/selection";
 import { Block, CodeBlock, parseProps } from "codehike/blocks";
 import { Pre, RawCode, highlight } from "codehike/code";
-import { tokenTransitions } from "./annotations/token-transitions";
+
+import { tokenTransitions } from "@/components/annotations/token-transitions";
 import { wordWrap } from "./annotations/word-wrap";
 
 const Schema = Block.extend({
@@ -43,8 +44,8 @@ export function Scrollycoding(props: unknown) {
   );
 }
 
-async function Code({ codeblock }: { codeblock: RawCode }) {
-  const highlighted = await highlight(codeblock, "github-dark");
+export async function Code({ codeblock }: { codeblock: RawCode }) {
+  const highlighted = await highlight(codeblock, "github-from-css");
   return (
     <Pre
       code={highlighted}

@@ -4,6 +4,7 @@ import { Code } from "./components/code";
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
+    ...defaultComponents,
     ...components,
     Code,
   };

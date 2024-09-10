@@ -1,0 +1,176 @@
+---
+title: JWT Authentication
+description: In this post, we are going to take a look at what is JWT authentication and how to implement it
+---
+
+import { Scrollycoding } from "@/components/scrollycoding";
+
+# Authentication
+
+Simply put, **_authentication_** is <u>a process of checking who the user is</u>.
+There are many ways to implement authentication process, and developers need to adopt the appropriate authentication strategy based on service characteristics.
+
+> Difference between authentication and authorization
+>
+> Authentication is a process to check the identification of user, which means to check whether user is officially registered in application database.
+> On the other hand, authorization indicates the process of determining user's permission level and granting the access according to the level.
+
+## Why do we need authentication?
+
+HTTP is [stateless](https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview#http_is_stateless_but_not_sessionless), which means there is no correlation between multiple requests being successively carried out on the same connection.
+The reason why HTTP is designed to be stateless[^1] is because
+
+1. Simplicity: Stateless protocols do not need to store any information about the communication between clients and servers.
+2. Scalability: Stateless protocols do not require any synchronization or coordination between clients and servers.
+3. Reliability: Stateless protocols would be more reliable as requests do not depend on the previous request.
+
+[^1]: [Why HTTP is designed to be stateless?](https://dev.to/codexam/why-is-http-stateless-2m3p)
+
+This will bring about the result that users need to authenticate (a.k.a. login or sign-in) every single time before sending request to the server that requires authentication process
+because server does not remember the information of the previous request. This will lead to the poor UX.
+
+## How can we implement authentication?
+
+### Session based
+
+[Session](<https://en.wikipedia.org/wiki/Session_(computer_science)>) is a way to maintain stateful information between client and server.
+Therefore, session-based authentication indicates a stateful authentication technique where we use sessions to keep track of the authenticated user.
+Below is the session-based authentication.
+
+<center>
+  <figure>
+    <img
+      src="https://res.cloudinary.com/practicaldev/image/fetch/s--jzM6Wq6e--/c_limit%2Cf_auto%2Cfl_progressive%2Cq_auto%2Cw_880/https://cdn-images-1.medium.com/max/800/0%2AP5OxJMihg0S0jyqk.png"
+      alt="session based authentication"
+    />
+    <figcaption>
+      Source: [Brian
+      Iyoha](https://dev.to/thecodearcher/what-really-is-the-difference-between-session-and-token-based-authentication-2o39)
+    </figcaption>
+  </figure>
+</center>
+
+1. Client (user) signs in with correct username and password.
+2. Once authentication information is correct, server will create a session object with unique session ID value inside, put it in cookie and send it back to the client.
+3. Session cookies are stored on the user's browser only for the duration of the session.
+4. Every time client sends a request to server, server will check the identification and will return response according to the request (or prohibit).
+
+All sensitive information of a user will be stored in the server, and the only information that client will obtain is session ID which is stored in cookie in browser.
+
+### Token based
+
+Meanwhile, [access token](https://www.okta.com/identity-101/access-token/) is a tiny piece of code (normally it's a long string) that contains a large amount of data.
+Token-based authentication obviously uses token for authentication. Below is how token-based authentication works.
+
+<center>
+  <figure>
+    <img
+      src="https://www.okta.com/sites/default/files/styles/tinypng/public/media/image/2024-05/TokenBasedAuthentication2.png?itok=NBQGXf8z"
+      alt="token based authentication"
+    />
+    <figcaption>
+      Source:
+      [OKTA](https://www.okta.com/identity-101/what-is-token-based-authentication/)
+    </figcaption>
+  </figure>
+</center>
+
+1. Client (user) signs in with correct username and password.
+2. Once authentication information is correct, server will create an access token.
+3. Client will send the access token that was given by server every time it sends requests.
+
+Unlike session-based authentication, server does not need to store all session IDs that provided to the client.
+Rather, it will just whether the access token is valid, and if it does, it will let client pass.
+
+### Summary
+
+Below is the summarization of session-based and token-based authentication
+
+| Question                                                          | Session-based                               | Token-based                                       |
+| ----------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------- |
+| What does client send to server to have their request authorized? | Cookie with Session ID                      | Token itself                                      |
+| What does server do to authorize users' request?                  | Look up database to find the right session  | Decrypt the user's token and verify its signature |
+| Server can manage the authentication operation                    | Yes, because server is keeping session info | No, because token is stored in client             |
+| Potential security danger                                         | CSRF attack                                 | Token steal                                       |
+
+## JWT
+
+JWT stands for <u>**J**</u>SON <u>**W**</u>eb <u>**T**</u>oken, which is the token that is used for transmitting information between parties as a JSON object equipped with compact and self-contained way[^2].
+
+JWT consists of three parts, and each parts are separated by dots(`.`).
+
+1. Header: It contains type of token (in most cases `"JWT"`), and signing algorithms (in most cases `"HS256"`).
+2. Payload: Statements about entity and additional data (a.k.a. _Claims_).
+3. Signature: Part where creating signature.
+
+Some pros of JWT are:
+
+1. As same as token-based authentication, server does not need to store every single users' authentication information, which will help to reduce DB overload and simplifies scaling and load balancing.
+2. RBAC (Role-Based Access Control) or authorization are easy to be implemented.
+
+### Drawbacks of JWT
+
+However, relying on JWT solely on JWT could be very dangerous in terms of securities.
+
+1. Although JWT is signed, this does NOT mean it also encrypts the content inside. Everyone <u>can decode and view contents</u> inside if secret keys are not properly maintained.
+2. Since server does not have control of users' authentication information, <u>it is hard to manage the unexpected errors of authentication</u>.
+   This means you are basically allowing user to multiple login with different advices, which is quite bad choice if you're thinking of building application that does security matter (e.g. banking app, online course app, etc).
+3. JWT is very vulnerable of <u>being hijacked</u>. Malicious hacker can carry out different types of attacks on application with the authenticated information.
+
+### Strategies to improve JWT
+
+So after extensive research, I found out what are some ways to improve JWT authentication.
+
+<br />
+
+> JWT content can be exposed to everybody
+
+🙋 _Well then let's encrypt the content one more time! We can use library such as [jose](https://github.com/panva/jose?tab=readme-ov-file#jose) for encrypting contents
+and carry out [JSON Web Encryption (JWE)](https://www.rfc-editor.org/rfc/rfc7516)._
+
+😐 _Wait a minute... We need to think two aspects on this._
+
+1. Encrypting contents of JWT can be costly for server when hashing. As our application does not require super high security level like financial apps, it could be an overkill.
+2. That being said, and most importantly, do we really need to put sensitive contents in our access token? JWT could be used only for authentication and authorization.
+   Any data fetching that requires authenticated layer will be done after server checks and verify JWT signature successfully.
+
+😎 **_Therefore, we can include only few necessary information that are not sensitive such as user's `id` and its `role` for implementing RBAC and avoid double encryption._**
+
+<br />
+
+> Our server does not have direct control over user's authentication. Therefore, JWT is highly vulnerable when being hijacked.
+
+🤔 _That's true. Then we can set access token expiration date as shorter as possible, like 5 minutes._
+
+<br />
+
+> That means users should sign-in every 5 minutes, which might be quite cumbersome job for them.
+
+😎 _We can take advantage of refresh token which normally has longer expiration date than access token (e.g. 1 month)._
+
+Refresh token will be used listerally for getting new access token. To be more specific,
+
+1. When user successfully logins with correct `password` and `username`, server will give both access token and refresh token to the user.
+2. Refresh token will be saved in the database.
+3. When access token expires (e.g. 5 minutes), server will look up refresh token that matches up with user's `id`.
+4. If there are no refresh token in database or expired, then we need to ask users to login again.
+
+## Implementing JWT authentication
+
+<Scrollycoding>
+
+###!!hi
+
+```ts
+const a = 1;
+```
+
+###!!hello
+
+```ts
+const b = 1;
+```
+
+</Scrollycoding>
+
+[^2]: [What is JSON Web Token?](https://jwt.io/introduction)

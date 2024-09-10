@@ -1,5 +1,5 @@
 {
     "title": "letha",
     "root": true,
-    "pages": ["---Backend---", "index", "import-alias"]
+    "pages": ["---Backend---", "index", "jwt-authentication"]
 }

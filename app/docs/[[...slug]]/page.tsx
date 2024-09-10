@@ -10,6 +10,7 @@ import {
 import { notFound } from "next/navigation";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import { Code } from "@/components/code";
+import { Code as ScrollycodingCode } from "@/components/scrollycoding";
 
 export default async function Page({
   params,
@@ -30,6 +31,7 @@ export default async function Page({
           components={{
             ...defaultMdxComponents,
             Code,
+            ScrollycodingCode,
             // pre: ({ ref: _ref, ...props }) => (
             //   <CodeBlock {...props} keepBackground>
             //     <Pre>{props.children}</Pre>
