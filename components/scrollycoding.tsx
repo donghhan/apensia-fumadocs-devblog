@@ -6,7 +6,6 @@ import {
 } from "codehike/utils/selection";
 import { Block, CodeBlock, parseProps } from "codehike/blocks";
 import { Pre, RawCode, highlight } from "codehike/code";
-
 import { tokenTransitions } from "@/components/annotations/token-transitions";
 import { wordWrap } from "./annotations/word-wrap";
 

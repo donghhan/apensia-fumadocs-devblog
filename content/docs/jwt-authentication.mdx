@@ -3,6 +3,8 @@ title: JWT Authentication
 description: In this post, we are going to take a look at what is JWT authentication and how to implement it
 ---
 
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+import { Step, Steps } from "fumadocs-ui/components/steps";
 import { Scrollycoding } from "@/components/scrollycoding";
 
 # Authentication
@@ -153,22 +155,335 @@ Refresh token will be used listerally for getting new access token. To be more s
 1. When user successfully logins with correct `password` and `username`, server will give both access token and refresh token to the user.
 2. Refresh token will be saved in the database.
 3. When access token expires (e.g. 5 minutes), server will look up refresh token that matches up with user's `id`.
-4. If there are no refresh token in database or expired, then we need to ask users to login again.
+4. If there is no refresh token in database or expired, then we need to ask users to login again.
 
-## Implementing JWT authentication
+<br />
+
+# Implementing JWT authentication
+
+## Downloading NPM packages
+
+<Tabs items={["npm", "yarn", "pnpm"]}>
+  <Tab value="npm">`npm i jsonwebtoken && npm i -D @types/jsonwebtoken`</Tab>
+  <Tab value="yarn">
+    `yarn add jsonwebtoken && yarn add -D @types/jsonwebtoken`
+  </Tab>
+  <Tab value="pnpm">
+    `pnpm add jsonwebtoken && pnpm add -D @types/jsonwebtoken`
+  </Tab>
+</Tabs>
+
+## `createAccessToken` method
+
+`createAccessToken` method literally creates the access token once user successfully logged in.
 
 <Scrollycoding>
 
-###!!hi
+### !!steps Initialization
 
-```ts
-const a = 1;
+Create `createAccessToken` method within `AuthController` class
+(If you want to, you may just make it as function and export it to connect with Router later).
+
+```ts ! createAccessToken.ts
+class AuthController {
+  private static createAccessToken = () => {};
+}
 ```
 
-###!!hello
+### !!steps Providing type for `payload`
 
-```ts
-const b = 1;
+We are going to include contents in our JWT token below.
+
+1. `_id`: This is the unique user ID value.
+2. `role`: This indicates the user's role. This will be used in RBAC later.
+
+Thus, let's tell our JWT `payload` that these contents will be included always with custom type.
+
+```ts ! createAccessToken.ts
+type CustomJWTPayloadType = {
+  _id: string;
+  role: UserRole;
+};
+
+class AuthController {
+  private static createAccessToken = (payload: CustomJWTPayloadType) => {};
+}
+```
+
+### !!steps JWT signature
+
+`createAccessToken` method will take `payload` that has been sent after successful login.
+We will pass `_id` and `role` value within `payload` object for signing.
+
+For this, we wil be using [`.sign()`](https://github.com/auth0/node-jsonwebtoken?tab=readme-ov-file#jwtsignpayload-secretorprivatekey-options-callback) method
+which takes first parameter of `payload` and second parameter of `secretOrPrivateKey`.
+
+```ts ! createAccessToken.ts
+type CustomJWTPayloadType = {
+  _id: string;
+  role: UserRole;
+};
+
+class AuthController {
+  private static createAccessToken = (payload: CustomJWTPayloadType) => {
+    return jwt.sign({ _id: payload._id, role: payload.role });
+  };
+}
+```
+
+### !!steps JWT secret key
+
+For `secretOrPrivatKey`, you may need to choose wisely and save it as an environment variable (`.env`) and keep it secret (`.gitignore`).
+This key must NOT be exposed to public by any case!
+
+```ts ! createAccessToken.ts
+type CustomJWTPayloadType = {
+  _id: string;
+  role: UserRole;
+};
+
+class AuthController {
+  private static createAccessToken = (payload: CustomJWTPayloadType) => {
+    return jwt.sign(
+      { _id: payload._id, role: payload.role },
+      "Your Access JWT secret key goes here" // 👉 Must be kept secret
+    );
+  };
+}
+```
+
+### !!steps Setting expiration date
+
+Life of access token should be shorter as possible to make it expired quickly so that hackers cannot abuse it although token has been hijacked.
+With using [`expiresIn`](https://github.com/auth0/node-jsonwebtoken?tab=readme-ov-file#token-expiration-exp-claim) property, you can set the life of access token.
+
+If you want to, you may also conceal the expiration date and save it as an environment variable.
+
+```ts ! createAccessToken.ts
+type CustomJWTPayloadType = {
+  _id: string;
+  role: UserRole;
+};
+
+class AuthController {
+  private static createAccessToken = (payload: CustomJWTPayloadType) => {
+    return jwt.sign(
+      { _id: payload._id, role: payload.role },
+      "Your Access JWT secret key goes here",
+      {
+        expiresIn: JWT_ACCESS_EXPIRES_IN, // 👉 I even kept this as secret
+      }
+    );
+  };
+}
+```
+
+</Scrollycoding>
+
+## `createRefreshToken` method
+
+`createRefreshToken` method looks as exactly same as `createAccessToken` except:
+
+1. Different secret key for generating refresh token
+2. Expiration date of refresh token
+
+```ts src/controllers/authController.ts
+class AuthController {
+  private static createRefreshToken = (payload: CustomJWTPayloadType) => {
+    return jwt.sign(
+      { _id: payload._id, role: payload.role },
+      "Your Refresh JWT secret key goes here", // 👉 You'd better create different secret key for refresh token
+      {
+        expiresIn: JWT_REFRESH_EXPIRES_IN, // 👉 It has longer life than access token
+      }
+    );
+  };
+}
+```
+
+## `handleRefreshToken` method
+
+This method is the method that helps to re-issue the new access token based on the refresh token saved in database.
+
+<Scrollycoding>
+
+### !!steps Initialization
+
+`handleRefreshToken` will be using both `Request` and `Response` object.
+
+```ts ! handleRefreshToken.ts
+import { Request, Response } from "express";
+
+class AuthController {
+  public static handleRefreshToken = async (req: Request, res: Response) => {};
+}
+```
+
+### !!steps Check existing refresh token
+
+We will check if there is already refresh token is available.
+[`req.cookies`](https://expressjs.com/en/4x/api.html#req.cookies) will check if there are any name with `refreshToken`.
+
+If `refreshToken` is not available for some reason, it will throw `401` error.
+
+```ts ! handleRefreshToken.ts
+import { Request, Response } from "express";
+
+class AuthController {
+  public static handleRefreshToken = async (req: Request, res: Response) => {
+    const existingRefreshToken = req.cookies.refreshToken;
+
+    if (!existingRefreshToken)
+      return res.status(401).json({ message: "Refresh token not found" });
+  };
+}
+```
+
+### !!steps Finding user with the refresh token
+
+Next, let's find a user with the refresh token before `handleRefreshToken` can actually re-issue new access token with it.
+With using [`Model.findOne()`](<https://mongoosejs.com/docs/api/model.html#Model.findOne()>), we can find user with the `existingRefreshToken`.
+
+Again, if there is no user with the refresh token, that means that user does not have any authenticated information so it will throw `403` error.
+
+```ts ! handleRefreshToken.ts
+import { Request, Response } from "express";
+import UserModel from "@/models/userModel.ts";
+
+class AuthController {
+  public static handleRefreshToken = async (req: Request, res: Response) => {
+    const existingRefreshToken = req.cookies.refreshToken;
+
+    if (!existingRefreshToken)
+      return res.status(401).json({ message: "Refresh token not found" });
+
+    const user = await User.findOne({ refreshToken: existingRefreshToken });
+    if (!user) return res.status(403).json({ message: "Forbidden" });
+  };
+}
+```
+
+### !!steps Verifying JWT token
+
+Once all validations were successfully done, we will verify if `existingRefreshToken` is valid signed token.
+We can do this by using [`jwt.verify()`](https://github.com/auth0/node-jsonwebtoken?tab=readme-ov-file#jwtverifytoken-secretorpublickey-options-callback).
+
+```ts ! handleRefreshToken.ts
+import { Request, Response } from "express";
+import UserModel from "@/models/userModel.ts";
+
+class AuthController {
+  public static handleRefreshToken = async (req: Request, res: Response) => {
+    const existingRefreshToken = req.cookies.refreshToken;
+
+    if (!existingRefreshToken)
+      return res.status(401).json({ message: "Refresh token not found" });
+
+    const user = await User.findOne({ refreshToken: existingRefreshToken });
+    if (!user) return res.status(403).json({ message: "Forbidden" });
+
+    jwt.verify(existingRefreshToken, JWT_REFRESH_SECRET_KEY);
+  };
+}
+```
+
+### !!steps Error handling
+
+We can pass callback function as the third parameter of `jwt.verify()` method. Let's start with error handling.
+
+1. If there were any errors _or_
+2. If user's `id` value does not matches up with `_id` value of `decoded` refresh token _or_
+3. If there is no `decoded` refresh token whatsoever,
+
+We will throw `403` error for authentication problem.
+
+```ts ! handleRefreshToken.ts
+import { Request, Response } from "express";
+import UserModel from "@/models/userModel.ts";
+
+class AuthController {
+  public static handleRefreshToken = async (req: Request, res: Response) => {
+    // ...
+
+    jwt.verify(
+      existingRefreshToken,
+      JWT_REFRESH_SECRET_KEY,
+      (error: unknown, decoded: CustomJWTPayloadType) => {
+        if (error || user.id !== decoded._id || !decoded)
+          return res.status(403).json({ error: "Decode error" });
+      }
+    );
+  };
+}
+```
+
+### !!steps Issue new access token
+
+If there are no errors whatsoever, we will take `_id` and `role` value from the user,
+and create new access token which is exactly same way of `createAccessToken` method does.
+
+```ts ! handleRefreshToken.ts
+import { Request, Response } from "express";
+import UserModel from "@/models/userModel.ts";
+
+class AuthController {
+  public static handleRefreshToken = async (req: Request, res: Response) => {
+    // ...
+
+    jwt.verify(
+      existingRefreshToken,
+      JWT_REFRESH_SECRET_KEY,
+      (error: unknown, decoded: CustomJWTPayloadType) => {
+        if (error || user.id !== decoded._id || !decoded)
+          return res.status(403).json({ error: "Decode error" });
+
+        const { _id, role } = user;
+        const newAccessToken = jwt.sign({ _id, role }, JWT_ACCESS_SECRET_KEY, {
+          expiresIn: JWT_ACCESS_EXPIRES_IN,
+        });
+      }
+    );
+  };
+}
+```
+
+### !!steps Send new access token in cookie
+
+Finally, send the newly re-issued access token through cookie.
+In order to send access token in safer way, we can use `httpOnly` cookie so that client cannot view it with using [`res.cookie`](https://expressjs.com/en/4x/api.html#res.cookie) property.
+
+```ts ! handleRefreshToken.ts
+import { Request, Response } from "express";
+import UserModel from "@/models/userModel.ts";
+
+class AuthController {
+  public static handleRefreshToken = async (req: Request, res: Response) => {
+    // ...
+
+    jwt.verify(
+      existingRefreshToken,
+      JWT_REFRESH_SECRET_KEY,
+      (error: unknown, decoded: CustomJWTPayloadType) => {
+        if (error || user.id !== decoded._id || !decoded)
+          return res.status(403).json({ error: "Decode error" });
+
+        const { _id, role } = user;
+        const newAccessToken = jwt.sign({ _id, role }, JWT_ACCESS_SECRET_KEY, {
+          expiresIn: JWT_ACCESS_EXPIRES_IN,
+        });
+
+        return res
+          .status(200)
+          .cookie("accessToken", newAccessToken, {
+            httpOnly: true,
+            sameSite: "strict",
+            secure: process.env.NODE_ENV !== "development",
+          })
+          .json({ accessToken: newAccessToken });
+      }
+    );
+  };
+}
 ```
 
 </Scrollycoding>
