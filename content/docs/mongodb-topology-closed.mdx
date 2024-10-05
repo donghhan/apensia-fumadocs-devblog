@@ -1,0 +1,98 @@
+---
+title: MongoTopologyClosedError
+description: Debugging of "MongoTopologyClosedError - Topology closed" error
+---
+
+# Background
+
+## What I was trying
+
+I was trying to building unit test with Jest for deleting categories.
+
+## What I was doing
+
+With using [mongodb-memory-server package](https://www.npmjs.com/package/mongodb-memory-server), I tried to
+
+1. Initialize fake database for unit testing,
+2. Delete all collections created during testing and,
+3. Disconnect fake database.
+
+For this, I used [`beforeAll()`](https://jestjs.io/docs/api#beforeallfn-timeout) for initializing fake database and [`afterAll()`](https://jestjs.io/docs/api#afterallfn-timeout) for post-testing operations.
+
+```ts deleteCategory.test.ts
+import {
+  connectFakeDB,
+  disconnectFakeDB,
+  deleteCollections,
+} from "../../utils/fakeDB";
+import Category from "../../../src/models/categoryModel";
+
+beforeAll(async () => {
+  connectFakeDB();
+
+  const category = new Category({
+    category: "existing_example_category",
+  });
+  await category.save();
+});
+
+afterAll(async () => {
+  deleteCollections();
+  disconnectFakeDB();
+});
+```
+
+# Problem
+
+But then I got an error in terminal console as below.
+
+```bash
+● Test suite failed to run
+
+    MongoTopologyClosedError: Topology is closed
+
+      24 |       await collection.deleteMany({});
+      25 |     }
+    > 26 |   }
+         |    ^
+      27 | };
+      28 |
+
+      at processWaitQueue (node_modules/.pnpm/mongodb@6.7.0/node_modules/mongodb/src/sdam/topology.ts:918:42)
+      at Topology.selectServer (node_modules/.pnpm/mongodb@6.7.0/node_modules/mongodb/src/sdam/topology.ts:601:5)
+      at retryOperation (node_modules/.pnpm/mongodb@6.7.0/node_modules/mongodb/src/operations/execute_operation.ts:266:33)
+      at executeOperation (node_modules/.pnpm/mongodb@6.7.0/node_modules/mongodb/src/operations/execute_operation.ts:199:20)
+      at ListCollectionsCursor._initialize (node_modules/.pnpm/mongodb@6.7.0/node_modules/mongodb/src/cursor/list_collections_cursor.ts:44:22)
+      at ListCollectionsCursor.[kInit] (node_modules/.pnpm/mongodb@6.7.0/node_modules/mongodb/src/cursor/abstract_cursor.ts:657:21)
+      at next (node_modules/.pnpm/mongodb@6.7.0/node_modules/mongodb/src/cursor/abstract_cursor.ts:763:7)
+      at ListCollectionsCursor.next (node_modules/.pnpm/mongodb@6.7.0/node_modules/mongodb/src/cursor/abstract_cursor.ts:401:12)
+      at ListCollectionsCursor.[Symbol.asyncIterator] (node_modules/.pnpm/mongodb@6.7.0/node_modules/mongodb/src/cursor/abstract_cursor.ts:312:26)
+      at ListCollectionsCursor.toArray (node_modules/.pnpm/mongodb@6.7.0/node_modules/mongodb/src/cursor/abstract_cursor.ts:449:22)
+      at CollectionsOperation.execute (node_modules/.pnpm/mongodb@6.7.0/node_modules/mongodb/src/operations/collections.ts:31:23)
+      at executeOperation (node_modules/.pnpm/mongodb@6.7.0/node_modules/mongodb/src/operations/execute_operation.ts:168:14)
+      at Db.collections (node_modules/.pnpm/mongodb@6.7.0/node_modules/mongodb/src/db.ts:418:12)
+      at deleteCollections (__tests__/utils/fakeDB.ts:26:29)
+```
+
+# Analysis
+
+Looking carefully in the code, there seemed to be a problem in code of deleting collections.
+
+Referring to the response of [CameronBurkohlder](https://stackoverflow.com/a/59959176/13121145)'s response, I just found out that I did not make `deleteCollections()` method be `await`ed before disconnecting fake database.
+
+# Solution
+
+I solved problem simply putting `await` syntax keyword in both `deleteCollections()` and `disconnectFakeDB()` methods.
+
+```ts deleteCategory.test.ts
+afterAll(async () => {
+  // !diff -
+  deleteCollections();
+  // !diff +
+  await deleteCollections();
+  // !diff -
+  disconnectFakeDB();
+  // !diff +
+  await disconnectFakeDB();
+});
+```

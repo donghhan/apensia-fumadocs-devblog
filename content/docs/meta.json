@@ -1,5 +1,5 @@
 {
     "title": "letha",
     "root": true,
-    "pages": ["---Backend---", "index", "jwt-authentication"]
+    "pages": ["---Backend---", "index", "jwt-authentication", "---Debug---", "mongodb-topology-closed"]
 }
